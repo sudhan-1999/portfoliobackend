@@ -3,6 +3,8 @@ import * as dotenv from "dotenv";
 dotenv.config();
 import cors from "cors";
 import nodemailer from "nodemailer";
+import {MongoClient} from 'mongodb';
+
 
 const app = express();
 const port = 3000;
@@ -10,9 +12,32 @@ const port = 3000;
 app.use(express.json());
 app.use(cors());
 
-app.post("/", async (req, res) => {
+const MONGO=process.env.mong_url;
+async function connectmongo(){
+    try{
+     const client = new MongoClient(MONGO);
+    await client.connect();
+    console.log("mongodb connected");
+    return client;
+    }catch(err){
+        console.log("Error conncting to the MongoDB",err);
+    }
+}
+export let client = await connectmongo();
+app.get("/projects",async(req,res)=>{
+  try{
+    const result = await client.db("Portfolio").collection("projects").find().toArray();
+    res.send(result);
+  }catch{
+    res.send("Error");
+  }
+}
+);
+app.post("/contact", async (req, res) => {
   const { name, email, phone, subject, message } = req.body;
-
+  if (!name || !email || !phone || !subject || !message) {
+    return res.status(400).send({ error: "All fields are required" });
+  }
  
   var transporter = nodemailer.createTransport({
     service: "gmail",
