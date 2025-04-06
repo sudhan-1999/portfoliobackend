@@ -24,15 +24,21 @@ async function connectmongo(){
     }
 }
 export let client = await connectmongo();
-app.get("/projects",async(req,res)=>{
-  try{
+
+
+app.get("/projects", async (req, res) => {
+  try {
+    await client.connect();
     const result = await client.db("Portfolio").collection("projects").find().toArray();
     res.send(result);
-  }catch{
-    res.send("Error");
+  } catch (err) {
+    console.error("Backend error fetching projects:", err);
+    res.status(500).send("Error fetching projects");
   }
-}
-);
+});
+
+
+
 app.post("/contact", async (req, res) => {
   const { name, email, phone, subject, message } = req.body;
   if (!name || !email || !phone || !subject || !message) {
